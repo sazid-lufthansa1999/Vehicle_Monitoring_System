@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Login - AI Monitoring</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="dark-theme login-page">
+    <div class="login-container">
+        <div class="login-card">
+            <h1>🚀 Security Portal</h1>
+            <p>Enter your credentials to access the Dashboard</p>
+            {% if error %}
+            <div class="error-msg">{{ error }}</div>
+            {% endif %}
+            <form method="POST">
+                <div class="input-group">
+                    <label>Username</label>
+                    <input type="text" name="username" placeholder="admin or operator" required>
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" name="password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-primary">Sign In</button>
+            </form>
+            <div class="login-footer">
+                <small>Roles: Administrator, Operator</small>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
