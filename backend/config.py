@@ -118,5 +118,5 @@ TEXT_SCALE = "AUTO"
 
 # Display settings
 SHOW_CONFIDENCE = True
-SHOW_SPEED = True
+SHOW_SPEED = False
 SHOW_TRACKER_ID = True

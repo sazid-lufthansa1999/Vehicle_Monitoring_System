@@ -62,7 +62,7 @@ class BehaviorEngine:
             # 2. Speeding Detection (Always active if speed is high)
             if speed > config.SPEED_LIMIT_KMH:
                 if current_zone and current_zone["category"] == "ROAD_LANE":
-                    self._trigger_violation(tracker_id, "SPEEDING", current_frame_index, violations_triggered)
+                    self._trigger_violation(tracker_id, "SPEEDING", current_frame_index, violations_triggered, speed)
 
             # 3. Movement Status
             is_stationary = speed < config.STATIONARY_SPEED_THRESHOLD
@@ -77,18 +77,18 @@ class BehaviorEngine:
                 if current_zone:
                     if current_zone["category"] == "NO_PARKING":
                         if stationary_duration > config.ILLEGAL_PARKING_THRESHOLD:
-                            self._trigger_violation(tracker_id, "ILLEGAL_PARKING", current_frame_index, violations_triggered)
+                            self._trigger_violation(tracker_id, "ILLEGAL_PARKING", current_frame_index, violations_triggered, speed)
                     
                     elif current_zone["category"] == "PARKING_SPOT":
                         # Check Crooked Parking (simplified: check if center is too close to ROI boundary)
                         if self._is_crooked(center, current_zone["polygon"]):
                             if stationary_duration > config.STATIONARY_TIME_THRESHOLD:
-                                self._trigger_violation(tracker_id, "CROOKED_PARKING", current_frame_index, violations_triggered)
+                                self._trigger_violation(tracker_id, "CROOKED_PARKING", current_frame_index, violations_triggered, speed)
                 
                 # Sudden Stop on Road
                 elif config.MONITORING_MODE != "PARKING" and stationary_duration > config.STATIONARY_TIME_THRESHOLD:
                     # If not in a designated parking spot but stopped on screen
-                    self._trigger_violation(tracker_id, "SUDDEN_STOP", current_frame_index, violations_triggered)
+                    self._trigger_violation(tracker_id, "SUDDEN_STOP", current_frame_index, violations_triggered, speed)
             else:
                 self.stationary_start.pop(tracker_id, None)
 
@@ -96,13 +96,13 @@ class BehaviorEngine:
             if config.STATIONARY_SPEED_THRESHOLD < speed < 10.0:
                 loitering_duration = self._get_loitering_duration(tracker_id)
                 if loitering_duration > config.LOITERING_TIME_THRESHOLD:
-                    self._trigger_violation(tracker_id, "LOITERING", current_frame_index, violations_triggered)
+                    self._trigger_violation(tracker_id, "LOITERING", current_frame_index, violations_triggered, speed)
 
             # 5. Wrong Way Detection (Only in ROAD_LANE)
             if current_zone and current_zone["category"] == "ROAD_LANE":
                 if len(self.path_history[tracker_id]) > self.fps:
                     if self._check_wrong_way(tracker_id):
-                        self._trigger_violation(tracker_id, "WRONG_WAY", current_frame_index, violations_triggered)
+                        self._trigger_violation(tracker_id, "WRONG_WAY", current_frame_index, violations_triggered, speed)
 
         return violations_triggered
 
@@ -156,7 +156,7 @@ class BehaviorEngine:
             return True
         return False
 
-    def _trigger_violation(self, tracker_id, v_type, frame_index, violations_triggered):
+    def _trigger_violation(self, tracker_id, v_type, frame_index, violations_triggered, speed=0):
         # Cooldown check (default 10 seconds for same vehicle/type)
         if time.time() - self.violation_cooldown[(tracker_id, v_type)] < 10:
             return
@@ -166,6 +166,7 @@ class BehaviorEngine:
         violation = {
             "tracker_id": tracker_id,
             "type": v_type,
+            "speed": round(speed, 2),
             "frame_index": frame_index,
             "timestamp": time.strftime("%Y%m%d_%H%M%S"),
             "v_time": frame_index / self.fps # Store for persistence check
