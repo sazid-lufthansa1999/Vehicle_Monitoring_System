@@ -28,7 +28,7 @@ LINE_END = "AUTO"
 
 # ==================== SPEED ESTIMATION CONFIGURATION ====================
 # Enable/disable speed estimation
-ENABLE_SPEED_ESTIMATION = False
+ENABLE_SPEED_ESTIMATION = True
 
 # Source points - 4 points in the video frame forming a quadrilateral
 # Set to "AUTO" to use relative road section based on resolution
@@ -118,5 +118,5 @@ TEXT_SCALE = "AUTO"
 
 # Display settings
 SHOW_CONFIDENCE = True
-SHOW_SPEED = False
+SHOW_SPEED = True
 SHOW_TRACKER_ID = True

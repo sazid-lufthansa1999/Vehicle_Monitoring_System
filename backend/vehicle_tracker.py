@@ -118,8 +118,8 @@ class VehicleMonitoringSystem:
         self.model = YOLO(config.MODEL_PATH)
         self.byte_tracker = sv.ByteTrack()
         
-        line_start = sv.Point(self.width * 0.1, self.height * 0.7) if config.LINE_START == "AUTO" else config.LINE_START
-        line_end = sv.Point(self.width * 0.9, self.height * 0.7) if config.LINE_END == "AUTO" else config.LINE_END
+        line_start = sv.Point(0, self.height * 0.7) if config.LINE_START == "AUTO" else config.LINE_START
+        line_end = sv.Point(self.width, self.height * 0.7) if config.LINE_END == "AUTO" else config.LINE_END
         self.line_counter = sv.LineZone(start=line_end, end=line_start)
         
         self.line_thickness = max(2, int(self.width * 0.003)) if config.LINE_THICKNESS == "AUTO" else config.LINE_THICKNESS
