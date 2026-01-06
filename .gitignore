@@ -2,27 +2,33 @@
 .env
 .env.*
 !.env.example
+backend/.env
 
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
+backend/__pycache__/
 env/
 venv/
 pip-log.txt
 
 # Node
 node_modules/
+frontend/node_modules/
 dist/
 dist-ssr/
 *.local
 
 # Firebase
 firebase-service-account.json
+backend/firebase-service-account.json
 
 # Media/Output (CRITICAL: Ignore all heavy files)
 static/uploads/
 violations/
+backend/uploads/
+backend/violations/
 *.mp4
 *.avi
 *.mov

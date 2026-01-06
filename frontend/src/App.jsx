@@ -93,7 +93,7 @@ function App() {
           <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shadow-lg shadow-accent/20">
             <Activity className="text-dark w-6 h-6" />
           </div>
-          {isSidebarOpen && <span className="font-bold text-xl tracking-tight">AI Vision</span>}
+          {isSidebarOpen && <span className="font-bold text-xl tracking-tight">AI Vehicle Monitoring Dashboard</span>}
         </div>
 
         <nav className="flex-1 px-4 py-6">
