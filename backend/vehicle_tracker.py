@@ -158,7 +158,7 @@ class VehicleMonitoringSystem:
     def generate_frames(self):
         frame_generator = sv.get_video_frames_generator(config.SOURCE_VIDEO_PATH)
         for frame_number, frame in enumerate(frame_generator):
-            results = self.model(frame, verbose=False, conf=config.CONFIDENCE_THRESHOLD, iou=config.IOU_THRESHOLD, classes=config.VEHICLE_CLASSES)[0]
+            results = self.model(frame, verbose=False, conf=config.CONFIDENCE_THRESHOLD, iou=config.IOU_THRESHOLD, classes=config.VEHICLE_CLASSES, imgsz=960)[0]
             detections = sv.Detections.from_ultralytics(results)
             detections = self.byte_tracker.update_with_detections(detections)
             self.line_counter.trigger(detections)

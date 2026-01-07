@@ -144,16 +144,31 @@ class BehaviorEngine:
         return dist < (self.width * 0.005)
 
     def _check_wrong_way(self, tracker_id):
-        # Simplistic: Check if Y movement is negative while road expects positive (or vice versa)
-        # In a real system, this depends on the specific road orientation
+        """Check if a vehicle is moving against the expected lane direction"""
         history = self.path_history[tracker_id]
-        start_y = history[0][1]
-        end_y = history[-1][1]
+        if len(history) < self.fps: 
+            return False
+            
+        start_x, start_y = history[0][0], history[0][1]
+        end_x, end_y = history[-1][0], history[-1][1]
         
-        # Dummy road logic: assuming vehicles should go DOWN (Y increases)
-        # If moving UP significantly, it's wrong way
-        if (start_y - end_y) > (self.height * 0.1): # Moved up 10% of screen
-            return True
+        # Divider is the horizontal center of the screen
+        divider = self.width / 2
+        
+        # Sensitivity threshold (moved at least 5% of screen height)
+        min_movement = self.height * 0.05
+        
+        # LANE LOGIC:
+        # Left Side (x < divider): Expected direction is DOWN (Towards camera, Y increases)
+        if end_x < divider:
+            if (start_y - end_y) > min_movement: # Moving UP instead of DOWN
+                return True
+                
+        # Right Side (x > divider): Expected direction is UP (Away from camera, Y decreases)
+        else:
+            if (end_y - start_y) > min_movement: # Moving DOWN instead of UP
+                return True
+                
         return False
 
     def _trigger_violation(self, tracker_id, v_type, frame_index, violations_triggered, speed=0):

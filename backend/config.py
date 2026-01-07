@@ -12,8 +12,8 @@ MONITORING_MODE = "BOTH"
 
 # ==================== MODEL CONFIGURATION ====================
 MODEL_PATH = "yolov8n.pt"
-CONFIDENCE_THRESHOLD = 0.3
-IOU_THRESHOLD = 0.5
+CONFIDENCE_THRESHOLD = 0.15
+IOU_THRESHOLD = 0.45
 VEHICLE_CLASSES = [2, 3, 5, 7]  # car, motorcycle, bus, truck
 
 # ==================== VIDEO CONFIGURATION ====================
@@ -96,8 +96,8 @@ PRE_VIOLATION_SECONDS = 5
 POST_VIOLATION_SECONDS = 5
 
 # ==================== BYTETRACK CONFIGURATION ====================
-TRACK_THRESH = 0.25
-TRACK_BUFFER = 30
+TRACK_THRESH = 0.1
+TRACK_BUFFER = 60
 MATCH_THRESH = 0.8
 FRAME_RATE = 30
 
