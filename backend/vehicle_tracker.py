@@ -10,6 +10,7 @@ from tqdm import tqdm
 import supervision as sv
 
 import config
+import time
 
 
 from collections import defaultdict, deque
@@ -189,7 +190,6 @@ class VehicleMonitoringSystem:
                             "timestamp": time.strftime("%Y%m%d_%H%M%S"),
                             "v_time": frame_number / self.fps
                         }
-                        import time
                         self._handle_ai_violation(violation)
             
             self.in_count = self.line_counter.in_count
