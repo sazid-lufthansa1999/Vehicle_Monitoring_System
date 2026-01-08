@@ -114,8 +114,15 @@ class VehicleMonitoringSystem:
         self.processed_frame_buffer = None
         
         # Initialization
-        print(f"📦 Loading YOLOv8 model: {config.MODEL_PATH}")
+        # Load models
+        print(f"📡 Loading Base Model: {config.MODEL_PATH}")
         self.model = YOLO(config.MODEL_PATH)
+        
+        self.violation_model = None
+        if hasattr(config, 'VIOLATION_MODEL_PATH') and config.VIOLATION_MODEL_PATH:
+            print(f"🛰️ Loading Violation Model: {config.VIOLATION_MODEL_PATH}")
+            self.violation_model = YOLO(config.VIOLATION_MODEL_PATH)
+            
         self.byte_tracker = sv.ByteTrack()
         
         line_start = sv.Point(0, self.height * 0.7) if config.LINE_START == "AUTO" else config.LINE_START
@@ -158,10 +165,32 @@ class VehicleMonitoringSystem:
     def generate_frames(self):
         frame_generator = sv.get_video_frames_generator(config.SOURCE_VIDEO_PATH)
         for frame_number, frame in enumerate(frame_generator):
-            results = self.model(frame, verbose=False, conf=config.CONFIDENCE_THRESHOLD, iou=config.IOU_THRESHOLD, classes=config.VEHICLE_CLASSES, imgsz=960)[0]
-            detections = sv.Detections.from_ultralytics(results)
+            # 1. Base Detection (for counting/tracking)
+            base_results = self.model(frame, verbose=False, conf=config.CONFIDENCE_THRESHOLD, iou=config.IOU_THRESHOLD, classes=config.VEHICLE_CLASSES, imgsz=960)[0]
+            detections = sv.Detections.from_ultralytics(base_results)
             detections = self.byte_tracker.update_with_detections(detections)
             self.line_counter.trigger(detections)
+
+            # 2. Violation Detection (from specialist model)
+            v_detections = None
+            if self.violation_model:
+                v_results = self.violation_model(frame, verbose=False, conf=config.CONFIDENCE_THRESHOLD, iou=config.IOU_THRESHOLD, classes=config.VIOLATION_CLASSES, imgsz=960)[0]
+                v_detections = sv.Detections.from_ultralytics(v_results)
+                
+                # Check for direct AI violations
+                for i, class_id in enumerate(v_detections.class_id):
+                    v_type_map = {0: "TURNING", 1: "U_TURN", 2: "WRONG_WAY"}
+                    v_type = v_type_map.get(class_id)
+                    if v_type:
+                        violation = {
+                            "tracker_id": -1,
+                            "type": v_type,
+                            "frame_index": frame_number,
+                            "timestamp": time.strftime("%Y%m%d_%H%M%S"),
+                            "v_time": frame_number / self.fps
+                        }
+                        import time
+                        self._handle_ai_violation(violation)
             
             self.in_count = self.line_counter.in_count
             self.out_count = self.line_counter.out_count
@@ -212,8 +241,16 @@ class VehicleMonitoringSystem:
                 cv2.putText(annotated_frame, zone_cfg['name'], (abs_zone[0][0], abs_zone[0][1]-10), 
                             cv2.FONT_HERSHEY_SIMPLEX, self.text_scale, color, self.text_thickness)
 
+            # Annotate Base Detections
             annotated_frame = self.box_annotator.annotate(scene=annotated_frame, detections=detections)
             annotated_frame = self.label_annotator.annotate(scene=annotated_frame, detections=detections, labels=labels)
+            
+            # Annotate Violation Detections (Warning style)
+            if v_detections and len(v_detections) > 0:
+                v_labels = [f"⚠️ {self.violation_model.model.names[cid]}" for cid in v_detections.class_id]
+                annotated_frame = self.box_annotator.annotate(scene=annotated_frame, detections=v_detections)
+                annotated_frame = self.label_annotator.annotate(scene=annotated_frame, detections=v_detections, labels=v_labels)
+                
             self.line_annotator.annotate(frame=annotated_frame, line_counter=self.line_counter)
             
             yield annotated_frame
@@ -274,6 +311,18 @@ class VehicleMonitoringSystem:
         if self.worker_thread:
             self.worker_thread.join(timeout=2)
             print("🛑 Background AI Processor Stopped")
+
+    def _handle_ai_violation(self, violation):
+        """Handle violations detected directly by the behavior model"""
+        # Add to recent for polling
+        with self.lock:
+            # Check for duplicates within short time for same spot/type (simplified cooldown)
+            recent_types = [rv['type'] for rv in self.recent_violations][-5:]
+            if violation['type'] not in recent_types:
+                self.recent_violations.append(violation)
+                self.total_violations += 1
+                if self.on_violation_callback:
+                    self.on_violation_callback(violation)
 
     def get_latest_frame(self):
         """Thread-safe access to the latest processed frame"""

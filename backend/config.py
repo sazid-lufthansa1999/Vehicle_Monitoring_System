@@ -12,9 +12,11 @@ MONITORING_MODE = "BOTH"
 
 # ==================== MODEL CONFIGURATION ====================
 MODEL_PATH = "yolov8n.pt"
+VIOLATION_MODEL_PATH = "bestDetection.pt"
 CONFIDENCE_THRESHOLD = 0.15
 IOU_THRESHOLD = 0.45
 VEHICLE_CLASSES = [2, 3, 5, 7]  # car, motorcycle, bus, truck
+VIOLATION_CLASSES = [0, 1, 2]   # Turning, U Turn, Wrong Way (for bestDetection.pt)
 
 # ==================== VIDEO CONFIGURATION ====================
 SOURCE_VIDEO_PATH = "2103099-uhd_3840_2160_30fps.mp4"  # Path to your input video
