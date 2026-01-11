@@ -4,7 +4,7 @@ import numpy as np
 from collections import defaultdict
 
 # Load your custom YOLOv8 model (using yolov8n for general vehicle detection)
-model = YOLO("yolov8n.pt")
+model = YOLO("best.pt")
 
 # Tracker history: tracker_id -> [last_positions]
 track_history = defaultdict(lambda: [])
@@ -98,12 +98,53 @@ def run_detection(source, is_live=False):
     cap.release()
     cv2.destroyAllWindows()
 
+import tkinter as tk
+from tkinter import filedialog, messagebox
+
+# ------------------------------
+# GUI and Main Logic
+# ------------------------------
+class DetectionApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("AI Traffic Monitor - Standalone v2")
+        self.root.geometry("400x250")
+        self.root.configure(bg="#1a1a1a")
+
+        # UI Styling
+        title_font = ("Arial", 14, "bold")
+        btn_font = ("Arial", 10, "bold")
+
+        tk.Label(root, text="Traffic Violation Detector", font=title_font, fg="white", bg="#1a1a1a").pack(pady=20)
+        
+        # Mode Selection Buttons
+        tk.Button(root, text="📁 SELECT VIDEO FILE", font=btn_font, bg="#2563eb", fg="white", 
+                  width=25, height=2, command=self.select_video).pack(pady=10)
+        
+        tk.Button(root, text="📷 START WEBCAM", font=btn_font, bg="#16a34a", fg="white", 
+                  width=25, height=2, command=self.start_webcam).pack(pady=10)
+
+        tk.Label(root, text="Press 'Q' on the video window to quit", fg="#9ca3af", bg="#1a1a1a", font=("Arial", 8)).pack(side="bottom", pady=10)
+
+    def select_video(self):
+        file_path = filedialog.askopenfilename(filetypes=[("Video files", "*.mp4 *.avi *.mov *.mkv")])
+        if file_path:
+            self.root.withdraw() # Hide UI while processing
+            try:
+                run_detection(file_path)
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+            self.root.deiconify() # Bring back UI
+
+    def start_webcam(self):
+        self.root.withdraw()
+        try:
+            run_detection(0, is_live=True)
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+        self.root.deiconify()
+
 if __name__ == "__main__":
-    print("--- Traffic Violation Detector (Standalone) ---")
-    print("Logic: Lane-Aware Wrong Way & Dynamic Parking Check")
-    choice = input("1=Video File, 2=Webcam: ")
-    if choice == "1":
-        path = input("Video Path: ")
-        run_detection(path)
-    else:
-        run_detection(0, is_live=True)
+    root = tk.Tk()
+    app = DetectionApp(root)
+    root.mainloop()
