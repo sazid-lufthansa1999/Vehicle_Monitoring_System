@@ -220,15 +220,22 @@ class VehicleMonitoringSystem:
             self.latest_processed_frame = frame
 
             labels = []
-            for i in range(len(detections)):
-                tid = detections.tracker_id[i] if detections.tracker_id is not None else None
-                parts = []
-                if tid is not None: parts.append(f"ID:{tid}")
-                if config.SHOW_SPEED and tid in current_speeds: parts.append(f"{current_speeds[tid]:.0f}km/h")
-                if self.behavior_engine:
-                    v_types = set([v["type"] for v in self.behavior_engine.active_violations if v["tracker_id"] == tid])
-                    for v_type in v_types: parts.append(f"⚠️{v_type}")
-                labels.append(" | ".join(parts))
+            if detections.tracker_id is not None:
+                for i, tracker_id in enumerate(detections.tracker_id):
+                    parts = []
+                    parts.append(f"ID:{tracker_id}")
+                    
+                    # Only show speed if enabled and available
+                    if config.SHOW_SPEED and tracker_id in current_speeds:
+                        parts.append(f"{current_speeds[tracker_id]:.0f} km/h")
+                        
+                    # Only show violations if behavior engine is active
+                    if self.behavior_engine:
+                        v_types = set([v["type"] for v in self.behavior_engine.active_violations if v["tracker_id"] == tracker_id])
+                        for v_type in v_types:
+                            parts.append(f"ALERT:{v_type}")
+                            
+                    labels.append(" | ".join(parts))
 
             annotated_frame = frame.copy()
             zone_colors = {"PARKING_SPOT": (0, 255, 0), "NO_PARKING": (0, 0, 255), "ROAD_LANE": (255, 0, 0)}

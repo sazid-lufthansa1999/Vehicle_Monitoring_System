@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 3
+names: ['Turning', 'U Turn', 'Wrong Way']
+
+roboflow:
+  workspace: ai-project-o87e1
+  project: vehicle-e7nng
+  version: 3
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/ai-project-o87e1/vehicle-e7nng/dataset/3

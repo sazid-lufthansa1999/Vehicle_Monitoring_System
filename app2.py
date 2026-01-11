@@ -144,7 +144,7 @@ class DetectionApp:
         tk.Label(root, text="Press 'Q' on the video window to quit", fg="#9ca3af", bg="#1a1a1a", font=("Arial", 8)).pack(side="bottom", pady=10)
 
     def select_video(self):
-        file_path = filedialog.askopenfilename(filetypes=[("Video files", "*.mp4 *.avi *.mov *.mkv")])
+        file_path = filedialog.askopenfilename(filetypes=[("Video files", "*.mp4 *.avi *.mov *.mkv *.webm")])
         if file_path:
             self.root.withdraw() # Hide UI while processing
             try:

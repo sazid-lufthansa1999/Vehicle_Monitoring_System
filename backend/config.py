@@ -11,8 +11,8 @@ from supervision.geometry.core import Point
 MONITORING_MODE = "BOTH"
 
 # ==================== MODEL CONFIGURATION ====================
-MODEL_PATH = "yolov8n.pt"
-VIOLATION_MODEL_PATH = "bestDetection.pt"
+MODEL_PATH = "yolo11n.pt"
+# VIOLATION_MODEL_PATH = "bestDetection.pt"
 CONFIDENCE_THRESHOLD = 0.15
 IOU_THRESHOLD = 0.45
 VEHICLE_CLASSES = [2, 3, 5, 7]  # car, motorcycle, bus, truck
@@ -30,7 +30,7 @@ LINE_END = "AUTO"
 
 # ==================== SPEED ESTIMATION CONFIGURATION ====================
 # Enable/disable speed estimation
-ENABLE_SPEED_ESTIMATION = True
+ENABLE_SPEED_ESTIMATION = False
 
 # Source points - 4 points in the video frame forming a quadrilateral
 # Set to "AUTO" to use relative road section based on resolution
@@ -53,7 +53,7 @@ TARGET_POINTS = np.array([
 VIDEO_FPS = "AUTO"  # Set to "AUTO" to detect from video file
 
 # ==================== BEHAVIOR MONITORING CONFIGURATION ====================
-ENABLE_BEHAVIOR_ANALYSIS = True
+ENABLE_BEHAVIOR_ANALYSIS = False # Disabling behavior analysis for now as user wants "normal" counting
 
 # Speed rules
 SPEED_LIMIT_KMH = 60.0  # Threshold for speeding alert
