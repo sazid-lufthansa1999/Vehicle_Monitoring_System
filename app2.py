@@ -22,7 +22,7 @@ def is_wrong_way(tracker_id, x, y, frame_w, frame_h):
     start_y = history[0][1]
     curr_y = y
     divider = frame_w / 2
-    min_move = frame_h * 0.05
+    min_move = frame_h * 0.02
     
     # Left Lane: Should go DOWN (Y increases)
     if x < divider:
@@ -66,13 +66,26 @@ def run_detection(source, is_live=False):
                 track_history[track_id].append((x, y))
                 if len(track_history[track_id]) > 30: track_history[track_id].pop(0)
 
-                # 1. Check Wrong Way
+                # 1. Custom Wrong Way Logic (Vector analysis)
                 if is_wrong_way(track_id, x, y, width, height):
                     active_violations[track_id] = "VIOLENCE"
+                
+                # 2. Model-based Wrong Way Detection (If using a model that has Wrong Way class)
+                # Looking at results.boxes.cls to see if ID 2 (Wrong Way) is detected
+                if results.boxes.id is not None:
+                    # Find indices for this track_id
+                    match_idx = (results.boxes.id == track_id).nonzero()
+                    if len(match_idx) > 0:
+                        idx = match_idx[0][0]
+                        cls_id = int(results.boxes.cls[idx])
+                        # If the custom model says "Wrong Way" (usually ID 2 per your model)
+                        # We force it to say "VIOLENCE"
+                        if model.names[cls_id].lower() == "wrong way" or cls_id == 2:
+                            active_violations[track_id] = "VIOLENCE"
 
-                # 2. Check Crooked Parking (If in Zone and 'stationary' - simple check)
+                # 3. Check Crooked Parking
                 is_in_zone = cv2.pointPolygonTest(parking_zone, (float(x), float(y)), False) >= 0
-                if is_in_zone and w > h: # Simple heuristic: if car horizontal in vertical spot
+                if is_in_zone and w > h: 
                     active_violations[track_id] = "CROOKED PARKING"
 
         # Visualization
@@ -84,13 +97,17 @@ def run_detection(source, is_live=False):
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
         # Overlay Violations
-        for tid, v_type in list(active_violations.items()):
-            # Find current box for this ID to draw near it
-            if results.boxes.id is not None and tid in results.boxes.id:
-                idx = (results.boxes.id == tid).nonzero()[0][0]
-                bx = results.boxes.xyxy[idx].cpu().numpy()
-                cv2.putText(annotated_frame, f"⚠️ ALERT: {v_type}", (int(bx[0]), int(bx[1])-30),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        if results.boxes.id is not None:
+            for tid, v_type in list(active_violations.items()):
+                # Find current box for this ID
+                ids_list = results.boxes.id.int().cpu().numpy().tolist()
+                if tid in ids_list:
+                    idx = ids_list.index(tid)
+                    bx = results.boxes.xyxy[idx].cpu().numpy()
+                    # Drawing without emoji to avoid OpenCV rendering issues
+                    color = (0, 0, 255) if v_type == "VIOLENCE" else (0, 255, 255)
+                    cv2.putText(annotated_frame, f"ALERT: {v_type}", (int(bx[0]), int(bx[1])-15),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 3)
 
         cv2.imshow("Smart Detection - app2.py", annotated_frame)
         if cv2.waitKey(1) & 0xFF == ord('q'): break
