@@ -4,7 +4,7 @@ import numpy as np
 from collections import defaultdict
 
 # Load your custom YOLOv8 model (using yolov8n for general vehicle detection)
-model = YOLO("best.pt")
+model = YOLO("best1.pt")
 
 # Tracker history: tracker_id -> [last_positions]
 track_history = defaultdict(lambda: [])
@@ -46,10 +46,6 @@ def run_detection(source, is_live=False):
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(cap.get(cv2.CAP_PROP_FPS)) or 30
 
-    # Define a dummy Parking Zone for testing Crooked Parking (Center Square)
-    parking_zone = np.array([[width*0.7, height*0.3], [width*0.9, height*0.3], 
-                             [width*0.9, height*0.8], [width*0.7, height*0.8]], np.int32)
-
     while True:
         ret, frame = cap.read()
         if not ret: break
@@ -83,19 +79,9 @@ def run_detection(source, is_live=False):
                         if model.names[cls_id].lower() == "wrong way" or cls_id == 2:
                             active_violations[track_id] = "VIOLENCE"
 
-                # 3. Check Crooked Parking
-                is_in_zone = cv2.pointPolygonTest(parking_zone, (float(x), float(y)), False) >= 0
-                if is_in_zone and w > h: 
-                    active_violations[track_id] = "CROOKED PARKING"
-
         # Visualization
         annotated_frame = results.plot()
         
-        # Draw Parking Zone
-        cv2.polylines(annotated_frame, [parking_zone], True, (0, 255, 0), 2)
-        cv2.putText(annotated_frame, "PARKING ZONE", (int(width*0.7), int(height*0.28)), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-
         # Overlay Violations
         if results.boxes.id is not None:
             for tid, v_type in list(active_violations.items()):
