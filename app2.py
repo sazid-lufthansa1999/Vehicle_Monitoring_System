@@ -68,7 +68,7 @@ def run_detection(source, is_live=False):
 
                 # 1. Check Wrong Way
                 if is_wrong_way(track_id, x, y, width, height):
-                    active_violations[track_id] = "WRONG WAY"
+                    active_violations[track_id] = "VIOLENCE"
 
                 # 2. Check Crooked Parking (If in Zone and 'stationary' - simple check)
                 is_in_zone = cv2.pointPolygonTest(parking_zone, (float(x), float(y)), False) >= 0
@@ -89,7 +89,7 @@ def run_detection(source, is_live=False):
             if results.boxes.id is not None and tid in results.boxes.id:
                 idx = (results.boxes.id == tid).nonzero()[0][0]
                 bx = results.boxes.xyxy[idx].cpu().numpy()
-                cv2.putText(annotated_frame, f"⚠️ VIOLATION: {v_type}", (int(bx[0]), int(bx[1])-30),
+                cv2.putText(annotated_frame, f"⚠️ ALERT: {v_type}", (int(bx[0]), int(bx[1])-30),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
         cv2.imshow("Smart Detection - app2.py", annotated_frame)
