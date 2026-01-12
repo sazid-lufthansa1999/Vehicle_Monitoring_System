@@ -156,7 +156,8 @@ async def stats(token_data: dict = Depends(verify_token)):
                 "in_count": int(ms.in_count),
                 "out_count": int(ms.out_count),
                 "total_violations": int(ms.total_violations),
-                "recent_violations": numpy_cast(recent)
+                "recent_violations": numpy_cast(recent),
+                "scene_type": getattr(ms, "scene_type", "UNKNOWN")
             }
         return data
     except Exception as e:

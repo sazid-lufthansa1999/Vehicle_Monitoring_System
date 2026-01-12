@@ -17,6 +17,9 @@ function LiveMonitor({ stats }) {
                     <div className="absolute top-6 left-6 flex gap-2">
                         <span className="px-4 py-2 bg-danger text-white text-[10px] font-black rounded-lg shadow-lg">LIVE</span>
                         <span className="px-4 py-2 bg-black/50 backdrop-blur-md text-white/70 text-[10px] font-bold rounded-lg border border-white/10 uppercase">
+                            {stats.scene_type || "DETECTING..."} MODE
+                        </span>
+                        <span className="px-4 py-2 bg-black/50 backdrop-blur-md text-white/70 text-[10px] font-bold rounded-lg border border-white/10 uppercase">
                             Highway Cam 01
                         </span>
                     </div>
