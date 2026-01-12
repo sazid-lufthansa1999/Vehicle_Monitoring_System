@@ -20,7 +20,10 @@ class SceneAnalyzer:
             return "ROAD" # Default fallback
             
         # 1. Convert to grayscale and detect edges
-        gray = cv2.cvtColor(frame_sample, cv2.cvtColor(cv2.COLOR_BGR2GRAY) if len(frame_sample.shape) == 3 else cv2.COLOR_BGR2GRAY)
+        if len(frame_sample.shape) == 3:
+            gray = cv2.cvtColor(frame_sample, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = frame_sample
         edges = cv2.Canny(gray, 50, 150, apertureSize=3)
         
         # 2. Detect lines
