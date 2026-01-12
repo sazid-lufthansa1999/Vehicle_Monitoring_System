@@ -8,8 +8,8 @@ function CamSettings() {
     const fileInputRef = useRef(null);
 
     const presets = [
-        { name: 'Source 1 (Main Road)', source: 'Sazid-vaiya.mp4', icon: Monitor },
-        { name: 'Source 2 (Parking)', source: 'istockphoto-1142262134-640_adpp_is.mp4', icon: Smartphone },
+        { name: 'Source 1 (Main Road)', source: 'road_monitoring.mp4', icon: Monitor },
+        { name: 'Source 2 (Parking)', source: 'parking2.mp4', icon: Smartphone },
         { name: 'Source 3 (4K Highway)', source: '2103099-uhd_3840_2160_30fps.mp4', icon: Camera },
     ];
 
