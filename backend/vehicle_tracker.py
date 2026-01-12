@@ -90,6 +90,7 @@ class SpeedEstimator:
 
 
 from behavior_engine import BehaviorEngine
+from scene_analyzer import SceneAnalyzer
 from recorder import ViolationRecorder
 import threading
 
@@ -102,6 +103,16 @@ class VehicleMonitoringSystem:
         self.width, self.height = self.video_info.width, self.video_info.height
         self.fps = self.video_info.fps if config.VIDEO_FPS == "AUTO" else config.VIDEO_FPS
         
+        # --- AUTO SCENE DETECTION ---
+        print("🧠 Analyzing Video Scene Context...")
+        analyzer = SceneAnalyzer()
+        self.scene_type = analyzer.analyze_video_source(config.SOURCE_VIDEO_PATH)
+        print(f"✅ AUTO-DETECTED SCENE: {self.scene_type}")
+        
+        # Update Config Mode Dynamically
+        config.MONITORING_MODE = self.scene_type
+        # ----------------------------
+
         # Stats
         self.in_count = 0
         self.out_count = 0
