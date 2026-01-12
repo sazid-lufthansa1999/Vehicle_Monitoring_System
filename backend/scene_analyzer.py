@@ -66,7 +66,7 @@ class SceneAnalyzer:
         
         print(f"🔍 Scene Analysis: Road Lines={road_votes}, Parking Lines={parking_votes}, Road Ratio={road_ratio:.2f}")
         
-        if road_ratio > 0.4: # If at least 40% of lines are diagonal, it's likely a perspective road view
+        if road_ratio > 0.3: # Relaxed threshold: 30% diagonal lines implies road perspective
             return "ROAD"
         else:
             return "PARKING"
