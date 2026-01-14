@@ -3,8 +3,11 @@ import cv2
 import numpy as np
 from collections import defaultdict
 
-# Load your custom YOLOv8 model (using yolov8n for general vehicle detection)
-model = YOLO("best.pt")
+# Load TWO models:
+# 1. General vehicle detection (for tracking and display)
+vehicle_model = YOLO("yolo11n.pt")
+# 2. Violation detection (for Lane Change, Turning, U-Turn, Wrong Way)
+violation_model = YOLO("best.pt")
 
 # Tracker history: tracker_id -> [last_positions]
 track_history = defaultdict(lambda: [])
@@ -50,8 +53,11 @@ def run_detection(source, is_live=False):
         ret, frame = cap.read()
         if not ret: break
 
-        # Use YOLOv8 tracking (ByteTrack)
-        results = model.track(frame, persist=True, verbose=False, classes=[2, 3, 5, 7])[0]
+        # Step 1: Use vehicle_model for tracking and display
+        results = vehicle_model.track(frame, persist=True, verbose=False, classes=[2, 3, 5, 7])[0]
+        
+        # Step 2: Use violation_model to detect violations
+        violation_results = violation_model(frame, verbose=False, conf=0.3)[0]
         
         if results.boxes.id is not None:
             boxes = results.boxes.xywh.cpu().numpy()
@@ -66,20 +72,31 @@ def run_detection(source, is_live=False):
                 if is_wrong_way(track_id, x, y, width, height):
                     active_violations[track_id] = "VIOLENCE"
                 
-                # 2. Model-based Violation Detection (Lane Change, Turning, U-Turn, Wrong Way)
-                # best.pt has: {0: 'Lane Change', 1: 'Turning', 2: 'U Turn', 3: 'Wrong Way'}
-                if results.boxes.id is not None:
-                    # Find indices for this track_id
-                    match_idx = (results.boxes.id == track_id).nonzero()
-                    if len(match_idx) > 0:
-                        idx = match_idx[0][0]
-                        cls_id = int(results.boxes.cls[idx])
-                        class_name = model.names[cls_id]
+        # Step 3: Check violations from violation_model
+        if violation_results.boxes is not None and len(violation_results.boxes) > 0:
+            for i, cls_id in enumerate(violation_results.boxes.cls):
+                cls_id = int(cls_id)
+                # Only Lane Change (0) and Wrong Way (3) = VIOLENCE
+                if cls_id in [0, 3]:
+                    # Get the bounding box center to match with tracked vehicle
+                    vio_box = violation_results.boxes.xyxy[i].cpu().numpy()
+                    vio_center_x = (vio_box[0] + vio_box[2]) / 2
+                    vio_center_y = (vio_box[1] + vio_box[3]) / 2
+                    
+                    # Find closest tracked vehicle
+                    if results.boxes.id is not None:
+                        min_dist = float('inf')
+                        closest_id = None
+                        for j, track_id in enumerate(track_ids):
+                            tx, ty = boxes[j][0], boxes[j][1]
+                            dist = np.sqrt((tx - vio_center_x)**2 + (ty - vio_center_y)**2)
+                            if dist < min_dist:
+                                min_dist = dist
+                                closest_id = track_id
                         
-                        # Only Lane Change (0) and Wrong Way (3) = VIOLENCE
-                        # Turning (1) and U-Turn (2) will just show bounding box
-                        if cls_id in [0, 3]:  # Lane Change, Wrong Way only
-                            active_violations[track_id] = "VIOLENCE"
+                        # If violation is close to a tracked vehicle (within 100px)
+                        if closest_id is not None and min_dist < 100:
+                            active_violations[closest_id] = "VIOLENCE"
 
         # Visualization
         annotated_frame = results.plot()
