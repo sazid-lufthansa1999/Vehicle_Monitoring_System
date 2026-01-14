@@ -4,7 +4,7 @@ import numpy as np
 from collections import defaultdict
 
 # Load your custom YOLOv8 model (using yolov8n for general vehicle detection)
-model = YOLO("best1.pt")
+model = YOLO("best.pt")
 
 # Tracker history: tracker_id -> [last_positions]
 track_history = defaultdict(lambda: [])
@@ -30,6 +30,28 @@ def is_wrong_way(tracker_id, x, y, frame_w, frame_h):
     # Right Lane: Should go UP (Y decreases)
     else:
         if (curr_y - start_y) > min_move: return True # Moving DOWN
+        
+    return False
+
+# ------------------------------
+# Helper: Check Lane Change
+# ------------------------------
+def is_lane_change(tracker_id, x, y, frame_w, frame_h):
+    """Detect sudden horizontal movement (lane change)"""
+    history = track_history[tracker_id]
+    if len(history) < 15: return False
+    
+    # Check horizontal displacement over last 15 frames
+    start_x = history[-15][0]
+    curr_x = x
+    
+    # Threshold: If vehicle moves more than 15% of frame width horizontally
+    lane_change_threshold = frame_w * 0.15
+    
+    horizontal_movement = abs(curr_x - start_x)
+    
+    if horizontal_movement > lane_change_threshold:
+        return True
         
     return False
 
@@ -66,7 +88,11 @@ def run_detection(source, is_live=False):
                 if is_wrong_way(track_id, x, y, width, height):
                     active_violations[track_id] = "VIOLENCE"
                 
-                # 2. Model-based Wrong Way Detection (If using a model that has Wrong Way class)
+                # 2. Lane Change Detection
+                if is_lane_change(track_id, x, y, width, height):
+                    active_violations[track_id] = "VIOLENCE"
+                
+                # 3. Model-based Wrong Way Detection (If using a model that has Wrong Way class)
                 # Looking at results.boxes.cls to see if ID 2 (Wrong Way) is detected
                 if results.boxes.id is not None:
                     # Find indices for this track_id
