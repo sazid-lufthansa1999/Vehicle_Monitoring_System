@@ -101,7 +101,30 @@ def run_detection(source, is_live=False):
         # Visualization
         annotated_frame = results.plot()
         
-        # Overlay Violations
+        # Draw violation detections on top
+        if violation_results.boxes is not None and len(violation_results.boxes) > 0:
+            for i in range(len(violation_results.boxes)):
+                vio_box = violation_results.boxes.xyxy[i].cpu().numpy()
+                cls_id = int(violation_results.boxes.cls[i])
+                conf = float(violation_results.boxes.conf[i])
+                class_name = violation_model.names[cls_id]
+                
+                # Draw bounding box
+                x1, y1, x2, y2 = map(int, vio_box)
+                
+                # Color coding: Red for VIOLENCE, Yellow for others
+                if cls_id in [0, 3]:  # Lane Change, Wrong Way
+                    color = (0, 0, 255)  # Red
+                    label = f"{class_name} - VIOLENCE {conf:.2f}"
+                else:  # Turning, U-Turn
+                    color = (0, 255, 255)  # Yellow
+                    label = f"{class_name} {conf:.2f}"
+                
+                cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), color, 2)
+                cv2.putText(annotated_frame, label, (x1, y1 - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+        
+        # Overlay VIOLENCE alerts for tracked vehicles
         if results.boxes.id is not None:
             for tid, v_type in list(active_violations.items()):
                 # Find current box for this ID
