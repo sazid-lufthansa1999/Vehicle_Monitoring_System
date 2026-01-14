@@ -98,10 +98,10 @@ def run_detection(source, is_live=False):
                         if closest_id is not None and min_dist < 100:
                             active_violations[closest_id] = "VIOLENCE"
 
-        # Visualization
-        annotated_frame = results.plot()
+        # Visualization - Start with blank frame (no vehicle boxes)
+        annotated_frame = frame.copy()
         
-        # Draw violation detections on top
+        # Draw violation detections only
         if violation_results.boxes is not None and len(violation_results.boxes) > 0:
             for i in range(len(violation_results.boxes)):
                 vio_box = violation_results.boxes.xyxy[i].cpu().numpy()
@@ -120,22 +120,9 @@ def run_detection(source, is_live=False):
                     color = (0, 255, 255)  # Yellow
                     label = f"{class_name} {conf:.2f}"
                 
-                cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), color, 2)
+                cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), color, 3)
                 cv2.putText(annotated_frame, label, (x1, y1 - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
-        
-        # Overlay VIOLENCE alerts for tracked vehicles
-        if results.boxes.id is not None:
-            for tid, v_type in list(active_violations.items()):
-                # Find current box for this ID
-                ids_list = results.boxes.id.int().cpu().numpy().tolist()
-                if tid in ids_list:
-                    idx = ids_list.index(tid)
-                    bx = results.boxes.xyxy[idx].cpu().numpy()
-                    # Drawing without emoji to avoid OpenCV rendering issues
-                    color = (0, 0, 255) if v_type == "VIOLENCE" else (0, 255, 255)
-                    cv2.putText(annotated_frame, f"ALERT: {v_type}", (int(bx[0]), int(bx[1])-15),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 3)
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
 
         cv2.imshow("Smart Detection - app2.py", annotated_frame)
         if cv2.waitKey(1) & 0xFF == ord('q'): break
