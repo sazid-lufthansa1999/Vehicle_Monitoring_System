@@ -76,8 +76,9 @@ def run_detection(source, is_live=False):
                         cls_id = int(results.boxes.cls[idx])
                         class_name = model.names[cls_id]
                         
-                        # All violations from model = VIOLENCE
-                        if cls_id in [0, 1, 2, 3]:  # Lane Change, Turning, U Turn, Wrong Way
+                        # Only Lane Change (0) and Wrong Way (3) = VIOLENCE
+                        # Turning (1) and U-Turn (2) will just show bounding box
+                        if cls_id in [0, 3]:  # Lane Change, Wrong Way only
                             active_violations[track_id] = "VIOLENCE"
 
         # Visualization
