@@ -34,28 +34,6 @@ def is_wrong_way(tracker_id, x, y, frame_w, frame_h):
     return False
 
 # ------------------------------
-# Helper: Check Lane Change
-# ------------------------------
-def is_lane_change(tracker_id, x, y, frame_w, frame_h):
-    """Detect sudden horizontal movement (lane change)"""
-    history = track_history[tracker_id]
-    if len(history) < 15: return False
-    
-    # Check horizontal displacement over last 15 frames
-    start_x = history[-15][0]
-    curr_x = x
-    
-    # Threshold: If vehicle moves more than 15% of frame width horizontally
-    lane_change_threshold = frame_w * 0.15
-    
-    horizontal_movement = abs(curr_x - start_x)
-    
-    if horizontal_movement > lane_change_threshold:
-        return True
-        
-    return False
-
-# ------------------------------
 # Function: Main Detection Loop
 # ------------------------------
 def run_detection(source, is_live=False):
@@ -84,25 +62,22 @@ def run_detection(source, is_live=False):
                 track_history[track_id].append((x, y))
                 if len(track_history[track_id]) > 30: track_history[track_id].pop(0)
 
-                # 1. Custom Wrong Way Logic (Vector analysis)
+                # 1. Custom Wrong Way Logic (Vector analysis - backup)
                 if is_wrong_way(track_id, x, y, width, height):
                     active_violations[track_id] = "VIOLENCE"
                 
-                # 2. Lane Change Detection
-                if is_lane_change(track_id, x, y, width, height):
-                    active_violations[track_id] = "VIOLENCE"
-                
-                # 3. Model-based Wrong Way Detection (If using a model that has Wrong Way class)
-                # Looking at results.boxes.cls to see if ID 2 (Wrong Way) is detected
+                # 2. Model-based Violation Detection (Lane Change, Turning, U-Turn, Wrong Way)
+                # best.pt has: {0: 'Lane Change', 1: 'Turning', 2: 'U Turn', 3: 'Wrong Way'}
                 if results.boxes.id is not None:
                     # Find indices for this track_id
                     match_idx = (results.boxes.id == track_id).nonzero()
                     if len(match_idx) > 0:
                         idx = match_idx[0][0]
                         cls_id = int(results.boxes.cls[idx])
-                        # If the custom model says "Wrong Way" (usually ID 2 per your model)
-                        # We force it to say "VIOLENCE"
-                        if model.names[cls_id].lower() == "wrong way" or cls_id == 2:
+                        class_name = model.names[cls_id]
+                        
+                        # All violations from model = VIOLENCE
+                        if cls_id in [0, 1, 2, 3]:  # Lane Change, Turning, U Turn, Wrong Way
                             active_violations[track_id] = "VIOLENCE"
 
         # Visualization
